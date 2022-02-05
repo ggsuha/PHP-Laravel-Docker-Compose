@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  server:
+    image: 'nginx:${NGINX_VER}'
+    ports:
+      - '${PHP_PORT}:80'
+    restart: on-failure
+    volumes:
+      - ./src:${WORK_DIR}
+      - ./nginx/nginx.template:/etc/nginx/conf.d/default.template
+    environment:
+      SITE_URL: ${SITE_URL}
+      ROOT_DIR: ${ROOT_DIR}
+    working_dir: ${WORK_DIR}
+    command: /bin/sh -c "envsubst '$${SITE_URL} $${ROOT_DIR}' < /etc/nginx/conf.d/default.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+    depends_on:
+      - php
+      - ${DB_CONNECTION}
+
+  php:
+    image: '${PHP_VER}'
+    volumes:
+      - ./src:${WORK_DIR}:delegated
+    extra_hosts:
+      - "${SITE_URL}:${HOST_IP}"
+
+  mysql:
+    image: mysql:${MYSQL_VER}
+    ports:
+      - '${MYSQL_PORT}:3306'
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - data:/var/lib/mysql
+
+  composer:
+    image: '${PHP_VER}'
+    entrypoint: ["composer"]
+    volumes:
+      - ./src:${WORK_DIR}
+
+  artisan:
+    image: '${PHP_VER}'
+    volumes:
+      - ./src:${WORK_DIR}
+    entrypoint: ["php", '${WORK_DIR}/artisan']
+
+  npm:
+    image: node:${NODE_VER}
+    working_dir: ${WORK_DIR}
+    entrypoint: ['npm']
+    volumes:
+      - ./src:${WORK_DIR}
+
+volumes:
+  data:
