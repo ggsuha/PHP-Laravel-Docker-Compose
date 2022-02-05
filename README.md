@@ -13,8 +13,11 @@ You can update your stack version and its configuration on `.env` file
 ## Initiate Laravel Project with Composer
 Run this below command with `c` as arguments, this is command for create Laravel 7 project:
 ```
-make composer c="create-project --prefer-dist laravel/laravel:^7.0 project-name"
+make composer c="create-project --prefer-dist laravel/laravel:^7.0 ."
 ```
+
+## Initiate Core PHP Project
+Create `src` directory and puth your files inside the directory.
 
 ## Spin up Server
 Run:
